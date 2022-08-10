@@ -32,6 +32,7 @@ import static org.apache.commons.csv.Token.Type.TOKEN;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Lexical analyzer.
@@ -49,7 +50,9 @@ final class Lexer implements Closeable {
     private static final char DISABLED = '\ufffe';
 
     private final char[] delimiter;
+    private final char[] lineDelimiter;
     private final char[] delimiterBuf;
+    private final char[] lineDelimiterBuf;
     private final char[] escapeDelimiterBuf;
     private final char escape;
     private final char quoteChar;
@@ -61,19 +64,32 @@ final class Lexer implements Closeable {
     /** The input stream */
     private final ExtendedBufferedReader reader;
     private String firstEol;
+    private boolean startOfLine;
 
     private boolean isLastTokenDelimiter;
 
     Lexer(final CSVFormat format, final ExtendedBufferedReader reader) {
         this.reader = reader;
         this.delimiter = format.getDelimiterString().toCharArray();
+        this.lineDelimiter = format.getLineDelimiterString() != null
+                             ? format.getLineDelimiterString().toCharArray()
+                             : null;
         this.escape = mapNullToDisabled(format.getEscapeCharacter());
         this.quoteChar = mapNullToDisabled(format.getQuoteCharacter());
         this.commentStart = mapNullToDisabled(format.getCommentMarker());
         this.ignoreSurroundingSpaces = format.getIgnoreSurroundingSpaces();
         this.ignoreEmptyLines = format.getIgnoreEmptyLines();
         this.delimiterBuf = new char[delimiter.length - 1];
+        if (lineDelimiter != null) {
+            this.lineDelimiterBuf = new char[lineDelimiter.length - 1];
+            Arrays.fill(lineDelimiterBuf, '\0');
+        }
+        else {
+            lineDelimiterBuf = null;
+        }
         this.escapeDelimiterBuf = new char[2 * delimiter.length - 1];
+        Arrays.fill(delimiterBuf, '\0');
+        this.startOfLine = true;
     }
 
     /**
@@ -134,6 +150,7 @@ final class Lexer implements Closeable {
             isLastTokenDelimiter = true;
             return true;
         }
+        Arrays.fill(delimiterBuf, '\0');
         reader.lookAhead(delimiterBuf);
         for (int i = 0; i < delimiterBuf.length; i++) {
             if (delimiterBuf[i] != delimiter[i+1]) {
@@ -194,13 +211,22 @@ final class Lexer implements Closeable {
     }
 
     /**
-     * Tests if the current character represents the start of a line: a CR, LF or is at the start of the file.
+     * Tests if the current character represents the start of a line.
      *
-     * @param ch the character to check
-     * @return true if the character is at the start of a line.
+     * @return true if is at the start of a line.
      */
-    boolean isStartOfLine(final int ch) {
-        return ch == LF || ch == CR || ch == UNDEFINED;
+    boolean isStartOfLine() {
+        return startOfLine;
+    }
+
+    /**
+     * Sets the variable of startOfLine.
+     *
+     * @param startOfLine The value of startOfLine.
+     *
+     */
+    void setStartOfLine(boolean startOfLine) {
+        this.startOfLine = startOfLine;
     }
 
     private char mapNullToDisabled(final Character c) {
@@ -233,7 +259,7 @@ final class Lexer implements Closeable {
 
         // empty line detection: eol AND (last char was EOL or beginning)
         if (ignoreEmptyLines) {
-            while (eol && isStartOfLine(lastChar)) {
+            while (eol && isStartOfLine()) {
                 // go on char ahead ...
                 lastChar = c;
                 c = reader.read();
@@ -254,7 +280,7 @@ final class Lexer implements Closeable {
             return token;
         }
 
-        if (isStartOfLine(lastChar) && isCommentStart(c)) {
+        if (isStartOfLine() && isCommentStart(c)) {
             final String line = reader.readLine();
             if (line == null) {
                 token.type = EOF;
@@ -278,13 +304,13 @@ final class Lexer implements Closeable {
             }
 
             // ok, start of token reached: encapsulated, or token
-            if (isDelimiter(c)) {
-                // empty token return TOKEN("")
-                token.type = TOKEN;
-            } else if (eol) {
+            if (eol) {
                 // empty token return EORECORD("")
                 // noop: token.content.append("");
                 token.type = EORECORD;
+            } else if (isDelimiter(c)) {
+                // empty token return TOKEN("")
+                token.type = TOKEN;
             } else if (isQuoteChar(c)) {
                 // consume encapsulated token
                 parseEncapsulatedToken(token);
@@ -299,6 +325,9 @@ final class Lexer implements Closeable {
                 parseSimpleToken(token, c);
             }
         }
+
+        setStartOfLine(token.type == EORECORD);
+
         return token;
     }
 
@@ -351,6 +380,10 @@ final class Lexer implements Closeable {
                     // token finish mark (encapsulator) reached: ignore whitespace till delimiter
                     while (true) {
                         c = reader.read();
+                        if (readEndOfLine(c)) {
+                            token.type = EORECORD;
+                            return token;
+                        }
                         if (isDelimiter(c)) {
                             token.type = TOKEN;
                             return token;
@@ -358,10 +391,6 @@ final class Lexer implements Closeable {
                         if (isEndOfFile(c)) {
                             token.type = EOF;
                             token.isReady = true; // There is data at EOF
-                            return token;
-                        }
-                        if (readEndOfLine(c)) {
-                            token.type = EORECORD;
                             return token;
                         }
                         if (!Character.isWhitespace((char)c)) {
@@ -448,7 +477,7 @@ final class Lexer implements Closeable {
      *
      * @return true if the given or next character is a line-terminator
      */
-    boolean readEndOfLine(int ch) throws IOException {
+    boolean readEndOfLineCheckCRLF(int ch) throws IOException {
         // check if we have \r\n...
         if (ch == CR && reader.lookAhead() == LF) {
             // note: does not change ch outside of this method!
@@ -468,6 +497,37 @@ final class Lexer implements Closeable {
         }
 
         return ch == LF || ch == CR;
+    }
+
+    /**
+     * This checker consumes silently the sequence of line delimiter...
+     *
+     * @return true if the given or next few characters are line-terminator characters.
+     */
+    boolean readEndOfLineCheckLineDelimiter(int ch) throws IOException {
+
+        if (ch != lineDelimiter[0]) {
+            return false;
+        }
+        if (lineDelimiter.length == 1) {
+            return true;
+        }
+
+        Arrays.fill(lineDelimiterBuf, '\0');
+        reader.lookAhead(lineDelimiterBuf);
+        for (int i = 0; i < lineDelimiterBuf.length; i++) {
+            if (lineDelimiterBuf[i] != lineDelimiter[i+1]) {
+                return false;
+            }
+        }
+        reader.read(lineDelimiterBuf, 0, lineDelimiterBuf.length);
+        return true;
+    }
+
+    boolean readEndOfLine(int ch) throws IOException {
+        return lineDelimiter == null || lineDelimiter.length == 0
+               ? readEndOfLineCheckCRLF(ch)
+               : readEndOfLineCheckLineDelimiter(ch);
     }
 
     // TODO escape handling needs more work

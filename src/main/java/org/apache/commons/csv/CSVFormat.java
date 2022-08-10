@@ -196,6 +196,8 @@ public final class CSVFormat implements Serializable {
 
         private String delimiter;
 
+        private String lineDelimiter;
+
         private DuplicateHeaderMode duplicateHeaderMode;
 
         private Character escapeCharacter;
@@ -228,6 +230,7 @@ public final class CSVFormat implements Serializable {
 
         private Builder(final CSVFormat csvFormat) {
             this.delimiter = csvFormat.delimiter;
+            this.lineDelimiter = csvFormat.lineDelimiter;
             this.quoteCharacter = csvFormat.quoteCharacter;
             this.quoteMode = csvFormat.quoteMode;
             this.commentMarker = csvFormat.commentMarker;
@@ -254,6 +257,9 @@ public final class CSVFormat implements Serializable {
          * @return a new CSVFormat instance.
          */
         public CSVFormat build() {
+            if (this.delimiter.equalsIgnoreCase(lineDelimiter)) {
+                throw new IllegalArgumentException("The lineDelimiter can not equals delimiter");
+            }
             return new CSVFormat(this);
         }
 
@@ -358,6 +364,27 @@ public final class CSVFormat implements Serializable {
                 throw new IllegalArgumentException("The delimiter cannot be a line break");
             }
             this.delimiter = delimiter;
+            return this;
+        }
+
+        /**
+         * Sets the lineDelimiter character.
+         *
+         * @param lineDelimiter the lineDelimiter character.
+         * @return This instance.
+         */
+        public Builder setLineDelimiter(final char lineDelimiter) {
+            return setLineDelimiter(String.valueOf(lineDelimiter));
+        }
+
+        /**
+         * Sets the lineDelimiter character.
+         *
+         * @param lineDelimiter the lineDelimiter character.
+         * @return This instance.
+         */
+        public Builder setLineDelimiter(final String lineDelimiter) {
+            this.lineDelimiter = lineDelimiter;
             return this;
         }
 
@@ -782,6 +809,7 @@ public final class CSVFormat implements Serializable {
      * </p>
      * <ul>
      * <li>{@code setDelimiter(',')}</li>
+     * <li>{@code setLineDelimiter(null)}</li>
      * <li>{@code setQuote('"')}</li>
      * <li>{@code setRecordSeparator("\r\n")}</li>
      * <li>{@code setIgnoreEmptyLines(true)}</li>
@@ -790,7 +818,7 @@ public final class CSVFormat implements Serializable {
      *
      * @see Predefined#Default
      */
-    public static final CSVFormat DEFAULT = new CSVFormat(COMMA, DOUBLE_QUOTE_CHAR, null, null, null, false, true, CRLF, null, null, null, false, false, false,
+    public static final CSVFormat DEFAULT = new CSVFormat(COMMA, null, DOUBLE_QUOTE_CHAR, null, null, null, false, true, CRLF, null, null, null, false, false, false,
             false, false, false, DuplicateHeaderMode.ALLOW_ALL);
 
     /**
@@ -1234,7 +1262,7 @@ public final class CSVFormat implements Serializable {
      * @see #TDF
      */
     public static CSVFormat newFormat(final char delimiter) {
-        return new CSVFormat(String.valueOf(delimiter), null, null, null, null, false, false, null, null, null, null, false, false, false, false, false, false,
+        return new CSVFormat(String.valueOf(delimiter), null, null, null, null, null, false, false, null, null, null, null, false, false, false, false, false, false,
                 DuplicateHeaderMode.ALLOW_ALL);
     }
 
@@ -1287,6 +1315,8 @@ public final class CSVFormat implements Serializable {
 
     private final String delimiter;
 
+    private final String lineDelimiter;
+
     private final Character escapeCharacter; // null if escaping is disabled
 
     private final String[] header; // array of header column names
@@ -1317,6 +1347,7 @@ public final class CSVFormat implements Serializable {
 
     private CSVFormat(final Builder builder) {
         this.delimiter = builder.delimiter;
+        this.lineDelimiter = builder.lineDelimiter;
         this.quoteCharacter = builder.quoteCharacter;
         this.quoteMode = builder.quoteMode;
         this.commentMarker = builder.commentMarker;
@@ -1342,6 +1373,7 @@ public final class CSVFormat implements Serializable {
      * Creates a customized CSV format.
      *
      * @param delimiter               the char used for value separation, must not be a line break character.
+     * @param lineDelimiter           the char used for line separation.
      * @param quoteChar               the Character used as value encapsulation marker, may be {@code null} to disable.
      * @param quoteMode               the quote mode.
      * @param commentStart            the Character used for comment identification, may be {@code null} to disable.
@@ -1361,12 +1393,13 @@ public final class CSVFormat implements Serializable {
      * @param duplicateHeaderMode     the behavior when handling duplicate headers
      * @throws IllegalArgumentException if the delimiter is a line break character.
      */
-    private CSVFormat(final String delimiter, final Character quoteChar, final QuoteMode quoteMode, final Character commentStart, final Character escape,
+    private CSVFormat(final String delimiter, final String lineDelimiter, final Character quoteChar, final QuoteMode quoteMode, final Character commentStart, final Character escape,
             final boolean ignoreSurroundingSpaces, final boolean ignoreEmptyLines, final String recordSeparator, final String nullString,
             final Object[] headerComments, final String[] header, final boolean skipHeaderRecord, final boolean allowMissingColumnNames,
             final boolean ignoreHeaderCase, final boolean trim, final boolean trailingDelimiter, final boolean autoFlush,
             final DuplicateHeaderMode duplicateHeaderMode) {
         this.delimiter = delimiter;
+        this.lineDelimiter = lineDelimiter;
         this.quoteCharacter = quoteChar;
         this.quoteMode = quoteMode;
         this.commentMarker = commentStart;
@@ -1433,7 +1466,7 @@ public final class CSVFormat implements Serializable {
         final CSVFormat other = (CSVFormat) obj;
         return duplicateHeaderMode == other.duplicateHeaderMode && allowMissingColumnNames == other.allowMissingColumnNames &&
                 autoFlush == other.autoFlush && Objects.equals(commentMarker, other.commentMarker) && Objects.equals(delimiter, other.delimiter) &&
-                Objects.equals(escapeCharacter, other.escapeCharacter) && Arrays.equals(header, other.header) &&
+                Objects.equals(lineDelimiter, other.lineDelimiter) && Objects.equals(escapeCharacter, other.escapeCharacter) && Arrays.equals(header, other.header) &&
                 Arrays.equals(headerComments, other.headerComments) && ignoreEmptyLines == other.ignoreEmptyLines &&
                 ignoreHeaderCase == other.ignoreHeaderCase && ignoreSurroundingSpaces == other.ignoreSurroundingSpaces &&
                 Objects.equals(nullString, other.nullString) && Objects.equals(quoteCharacter, other.quoteCharacter) && quoteMode == other.quoteMode &&
@@ -1528,6 +1561,15 @@ public final class CSVFormat implements Serializable {
      */
     public String getDelimiterString() {
         return delimiter;
+    }
+
+    /**
+     * Returns the character lineDelimiting the values (typically "\n", "\r" or "\r\n").
+     *
+     * @return the lineDelimiter.
+     */
+    public String getLineDelimiterString() {
+        return lineDelimiter;
     }
 
     /**
@@ -1660,7 +1702,7 @@ public final class CSVFormat implements Serializable {
         int result = 1;
         result = prime * result + Arrays.hashCode(header);
         result = prime * result + Arrays.hashCode(headerComments);
-        return prime * result + Objects.hash(duplicateHeaderMode, allowMissingColumnNames, autoFlush, commentMarker, delimiter, escapeCharacter,
+        return prime * result + Objects.hash(duplicateHeaderMode, allowMissingColumnNames, autoFlush, commentMarker, delimiter, lineDelimiter, escapeCharacter,
                 ignoreEmptyLines, ignoreHeaderCase, ignoreSurroundingSpaces, nullString, quoteCharacter, quoteMode, quotedNullString, recordSeparator,
                 skipHeaderRecord, trailingDelimiter, trim);
     }
@@ -1705,6 +1747,15 @@ public final class CSVFormat implements Serializable {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns whether lintDelimiter has been defined.
+     *
+     * @return {@code true} if lineDelimiter is defined.
+     */
+    public boolean isLineDelimiterSet() {
+        return lineDelimiter != null;
     }
 
     /**
@@ -2182,6 +2233,10 @@ public final class CSVFormat implements Serializable {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("Delimiter=<").append(delimiter).append('>');
+        if (isLineDelimiterSet()) {
+            sb.append(' ');
+            sb.append("LineDelimiter=<").append(lineDelimiter).append('>');
+        }
         if (isEscapeCharacterSet()) {
             sb.append(' ');
             sb.append("Escape=<").append(escapeCharacter).append('>');
@@ -2235,6 +2290,10 @@ public final class CSVFormat implements Serializable {
     private void validate() throws IllegalArgumentException {
         if (containsLineBreak(delimiter)) {
             throw new IllegalArgumentException("The delimiter cannot be a line break");
+        }
+
+        if (delimiter.equalsIgnoreCase(lineDelimiter)) {
+            throw new IllegalArgumentException("The lineDelimiter and the delimiter cannot be the same ('" + lineDelimiter + "')");
         }
 
         if (quoteCharacter != null && contains(delimiter, quoteCharacter.charValue())) {
@@ -2379,6 +2438,19 @@ public final class CSVFormat implements Serializable {
     @Deprecated
     public CSVFormat withDelimiter(final char delimiter) {
         return builder().setDelimiter(delimiter).build();
+    }
+
+    /**
+     * Returns a new {@code CSVFormat} with the lineDelimiter of the format set to the specified character.
+     *
+     * @param lineDelimiter the lineDelimiter character
+     * @return A new CSVFormat that is equal to this with the specified character as lineDelimiter
+     * @throws IllegalArgumentException thrown if the specified character is a line break
+     * @deprecated Use {@link Builder#setDelimiter(char)}
+     */
+    @Deprecated
+    public CSVFormat withLineDelimiter(final char lineDelimiter) {
+        return builder().setLineDelimiter(lineDelimiter).build();
     }
 
     /**
