@@ -20,11 +20,12 @@
   <parent>
     <groupId>com.infracreate.testjdk8</groupId>
     <artifactId>arcticfox-csv</artifactId>
-    <version>5.4.13-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>commons-csv</artifactId>
   <packaging>jar</packaging>
+  <version>1.0.0-SNAPSHOT</version>
   <name>${project.artifactId} module for ArcticFox ${project.version}</name>
   <url>https://commons.apache.org/proper/commons-csv/</url>
   <inceptionYear>2005</inceptionYear>
