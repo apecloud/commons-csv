@@ -188,28 +188,28 @@ public class CSVBenchmark {
         return count;
     }
 
-    @Benchmark
-    public int parseSkifeCSV(final Blackhole bh) throws Exception {
-        final org.skife.csv.CSVReader reader = new org.skife.csv.SimpleReader();
-        reader.setSeperator(',');
-        final CountingReaderCallback callback = new CountingReaderCallback();
-
-        try (final Reader in = getReader()) {
-          reader.parse(in, callback);
-        }
-
-        bh.consume(callback);
-        return callback.count;
-    }
-
-    private static class CountingReaderCallback implements org.skife.csv.ReaderCallback {
-        public int count;
-
-        @Override
-        public void onRow(final String[] fields) {
-            count++;
-        }
-    }
+//    @Benchmark
+//    public int parseSkifeCSV(final Blackhole bh) throws Exception {
+//        final org.skife.csv.CSVReader reader = new org.skife.csv.SimpleReader();
+//        reader.setSeperator(',');
+//        final CountingReaderCallback callback = new CountingReaderCallback();
+//
+//        try (final Reader in = getReader()) {
+//          reader.parse(in, callback);
+//        }
+//
+//        bh.consume(callback);
+//        return callback.count;
+//    }
+//
+//    private static class CountingReaderCallback implements org.skife.csv.ReaderCallback {
+//        public int count;
+//
+//        @Override
+//        public void onRow(final String[] fields) {
+//            count++;
+//        }
+//    }
 
     @Benchmark
     public int parseSuperCSV(final Blackhole bh) throws Exception {
