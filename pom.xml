@@ -67,6 +67,42 @@
       <version>2.1.214</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>1.35</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-generator-annprocess</artifactId>
+      <version>1.35</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>genjava</groupId>
+      <artifactId>gj-csv</artifactId>
+      <version>1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.javacsv</groupId>
+      <artifactId>javacsv</artifactId>
+      <version>2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.opencsv</groupId>
+      <artifactId>opencsv</artifactId>
+      <version>5.6</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.supercsv</groupId>
+      <artifactId>super-csv</artifactId>
+      <version>2.4.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <developers>
@@ -423,60 +459,18 @@
       <id>benchmark</id>
 
       <dependencies>
-        <dependency>
-          <groupId>org.openjdk.jmh</groupId>
-          <artifactId>jmh-core</artifactId>
-          <version>1.35</version>
-          <scope>test</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>org.openjdk.jmh</groupId>
-          <artifactId>jmh-generator-annprocess</artifactId>
-          <version>1.35</version>
-          <scope>test</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>genjava</groupId>
-          <artifactId>gj-csv</artifactId>
-          <version>1.0</version>
-          <scope>test</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>net.sourceforge.javacsv</groupId>
-          <artifactId>javacsv</artifactId>
-          <version>2.0</version>
-          <scope>test</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>com.opencsv</groupId>
-          <artifactId>opencsv</artifactId>
-          <version>5.6</version>
-          <scope>test</scope>
-        </dependency>
-
-        <dependency>
-          <groupId>net.sf.supercsv</groupId>
-          <artifactId>super-csv</artifactId>
-          <version>2.4.0</version>
-          <scope>test</scope>
-        </dependency>
-
-        <!-- 
+        <!--
              Not in Maven Central, download manually from http://kasparov.skife.org/csv/csv-1.0.jar and install with:
              mkdir C:\Java\skife.org\
              curl https://repo.marketcetera.org/maven/org/skife/kasparov/csv/1.0/csv-1.0.jar -o C:\Java\skife.org\csv-1.0.jar
              mvn install:install-file -Dfile=C:/Java/skife.org/csv-1.0.jar -DgroupId=org.skife.kasparov -DartifactId=csv -Dversion=1.0 -Dpackaging=jar 
          -->
-        <dependency>
-          <groupId>org.skife.kasparov</groupId>
-          <artifactId>csv</artifactId>
-          <version>1.0</version>
-          <scope>provided</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--          <groupId>org.skife.kasparov</groupId>-->
+<!--          <artifactId>csv</artifactId>-->
+<!--          <version>1.0</version>-->
+<!--          <scope>provided</scope>-->
+<!--        </dependency>-->
 
         <dependency>
           <groupId>org.apache.commons</groupId>
