@@ -18,14 +18,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.alibaba.polardbx</groupId>
-    <artifactId>arcticfox-csv</artifactId>
-    <version>5.4.13-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
+    <groupId>com.apecloud.foxlake</groupId>
+    <artifactId>foxlake-csv</artifactId>
+    <version>${revision}</version>
   </parent>
   <artifactId>commons-csv</artifactId>
   <packaging>jar</packaging>
-  <name>${project.artifactId} module for ArcticFox ${project.version}</name>
   <url>https://commons.apache.org/proper/commons-csv/</url>
   <inceptionYear>2005</inceptionYear>
   <description>The Apache Commons CSV library provides a simple interface for reading and writing CSV files of various types.</description>
